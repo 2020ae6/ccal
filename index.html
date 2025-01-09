@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compound Interest Calculator</title>
+    <style>
+        :root {
+            --primary-color: #e65c00;
+            --accent-color: #76b852;
+            --text-color: #333;
+            --border-color: #ddd;
+            --card-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --chart-primary: #2196F3;
+            --chart-secondary: #FF9800;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #666;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .currency-buttons, .contribution-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .currency-btn, .contrib-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .currency-btn.active, .contrib-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .period-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .calculate-btn:hover {
+            background: #5fa143;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .result-card {
+            text-align: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .result-card .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .breakdown-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .view-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .view-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .view-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .download-menu {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .download-btn {
+            padding: 0.5rem 1rem;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .download-options {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: var(--card-shadow);
+            z-index: 10;
+        }
+
+        .download-options button {
+            display: block;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            border: none;
+            background: none;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .download-options button:hover {
+            background: #f5f5f5;
+        }
+
+        @media (max-width: 768px) {
+            .calculator-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Compound Interest Calculator</h1>
+            <p>Calculate your investment's growth over time</p>
+        </header>
+
+        <main class="calculator-grid">
+            <section class="input-section card">
+                <div class="input-group">
+                    <label>Currency:</label>
+                    <div class="currency-buttons">
+                        <button class="currency-btn active" data-currency="$">$</button>
+                        <button class="currency-btn" data-currency="€">€</button>
+                        <button class="currency-btn" data-currency="£">£</button>
+                        <button class="currency-btn" data-currency="₹">₹</button>
+                        <button class="currency-btn" data-currency="¥">¥</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="initial">Initial Investment:</label>
+                    <input type="number" id="initial" value="5000" min="0">
+                </div>
+
+                <div class="input-group">
+                    <label for="rate">Interest Rate (%):</label>
+                    <input type="number" id="rate" value="5" min="0" step="0.1">
+                </div>
+
+                <div class="input-group">
+                    <label for="compound-frequency">Compound Frequency:</label>
+                    <select id="compound-frequency">
+                        <option value="365">Daily (365/yr)</option>
+                        <option value="360">Daily (360/yr)</option>
+                        <option value="104">Semi-Weekly (104/yr)</option>
+                        <option value="52">Weekly (52/yr)</option>
+                        <option value="26">Bi-Weekly (26/yr)</option>
+                        <option value="24">Semi-Monthly (24/yr)</option>
+                        <option value="12" selected>Monthly (12/yr)</option>
+                        <option value="6">Bi-Monthly (6/yr)</option>
+                        <option value="4">Quarterly (4/yr)</option>
+                        <option value="2">Half-Yearly (2/yr)</option>
+                        <option value="1">Yearly (1/yr)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Investment Period:</label>
+                    <div class="period-inputs">
+                        <div class="period-input">
+                            <input type="number" id="years" value="5" min="0">
+                            <label for="years">Years</label>
+                        </div>
+                        <div class="period-input">
+                            <input type="number" id="months" value="0" min="0" max="11">
+                            <label for="months">Months</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Additional Contributions:</label>
+                    <div class="contribution-options">
+                        <button class="contrib-btn active" data-type="none">None</button>
+                        <button class="contrib-btn" data-type="deposit">Deposits</button>
+                        <button class="contrib-btn" data-type="withdrawal">Withdrawals</button>
+                    </div>
+                </div>
+
+                <div id="contribution-details" class="hidden">
+                    <div class="input-group">
+                        <label for="contribution-amount">Amount:</label>
+                        <input type="number" id="contribution-amount" value="0" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label for="contribution-frequency">Frequency:</label>
+                        <select id="contribution-frequency">
+                            <option value="12">Monthly (12/yr)</option>
+                            <option value="4">Quarterly (4/yr)</option>
+                            <option value="1">Yearly (1/yr)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button id="calculate" class="calculate-btn">Calculate</button>
+            </section>
+
+            <section class="results-section card">
+                <div class="download-menu">
+                    <button class="download-btn">Download ⌄</button>
+                    <div class="download-options">
+                        <button data-format="png">Download PNG image</button>
+                        <button data-format="jpg">Download JPEG image</button>
+                        <button data-format="pdf">Download PDF document</button>
+                        <button data-format="svg">Download SVG vector</button>
+                        <button data-format="csv">Download CSV</button>
+                        <button data-format="xls">Download XLS</button>
+                    </div>
+                </div>
+
+                <div class="results-grid">
+                    <div class="result-card">
+                        <h3>Future Value</h3>
+                        <div class="value" id="future-value">$0.00</div>
+                    </div>
+                    <div class="result-card">
+                        <h3>Total Interest Earned</h3>
+                        <div class="value" id="total-interest">$0.00</div>
+                    </div>
+                    <div class="result-card">
+                        <h3>Initial Balance</h3>
+                        <div class="value" id="initial-balance">$0.00</div>
+                    </div>
+                </div>
+
+                <div class="breakdown-controls">
+                    <div class="view-options">
+                        <button class="view-btn active" data-view="monthly">Monthly</button>
+                        <button class="view-btn" data-view="yearly">Yearly</button>
+                    </div>
+                    <div class="view-options">
+                        <button class="view-btn active" data-display="table">Table</button>
+                        <button class="view-btn" data-display="chart">Chart</button>
+                    </div>
+                </div>
+
+                <div id="table-view">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Period</th>
+                                    <th>Interest</th>
+                                    <th>Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="results-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="chart-view" class="hidden">
+                    <canvas id="results-chart"></canvas>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        const calculator = {
+    initialize() {
+        this.setupEventListeners();
+        this.chart = null;
+        this.calculate();
+    },
+
+    setupEventListeners() {
+        document.querySelectorAll('.currency-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.setCurrency(btn));
+        });
+
+        document.querySelectorAll('.contrib-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.setContributionType(btn));
+        });
+
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.setView(btn));
+        });
+
+        document.getElementById('calculate').addEventListener('click', () => this.calculate());
+
+        const downloadBtn = document.querySelector('.download-btn');
+        const downloadOptions = document.querySelector('.download-options');
+        
+        downloadBtn.addEventListener('click', () => {
+            downloadOptions.style.display = downloadOptions.style.display === 'block' ? 'none' : 'block';
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.download-menu')) {
+                downloadOptions.style.display = 'none';
+            }
+        });
+
+        document.querySelectorAll('.download-options button').forEach(btn => {
+            btn.addEventListener('click', () => this.downloadResults(btn.dataset.format));
+        });
+    },
+
+    setCurrency(btn) {
+        document.querySelector('.currency-btn.active').classList.remove('active');
+        btn.classList.add('active');
+        this.calculate();
+    },
+
+    setContributionType(btn) {
+        document.querySelector('.contrib-btn.active').classList.remove('active');
+        btn.classList.add('active');
+        document.getElementById('contribution-details').classList.toggle('hidden', btn.dataset.type === 'none');
+        this.calculate();
+    },
+
+    setView(btn) {
+        const group = btn.parentElement;
+        group.querySelector('.active').classList.remove('active');
+        btn.classList.add('active');
+        
+        if (btn.dataset.display) {
+            document.getElementById('table-view').classList.toggle('hidden', btn.dataset.display === 'chart');
+            document.getElementById('chart-view').classList.toggle('hidden', btn.dataset.display === 'table');
+            if (btn.dataset.display === 'chart') {
+                this.updateChart();
+            }
+        }
+        
+        this.calculate();
+    },
+
+    calculate() {
+        const initial = parseFloat(document.getElementById('initial').value);
+        const rate = parseFloat(document.getElementById('rate').value) / 100;
+        const years = parseInt(document.getElementById('years').value);
+        const months = parseInt(document.getElementById('months').value);
+        const compoundFrequency = parseInt(document.getElementById('compound-frequency').value);
+        const currency = document.querySelector('.currency-btn.active').dataset.currency;
+        const contributionType = document.querySelector('.contrib-btn.active').dataset.type;
+        const contributionAmount = parseFloat(document.getElementById('contribution-amount').value) || 0;
+        const contributionFrequency = parseInt(document.getElementById('contribution-frequency').value);
+
+        // Total time in years (including months)
+        const totalTimeYears = years + (months / 12);
+        
+        // Calculate using compound interest formula: A = P(1 + r/n)^(nt)
+        // Where: A = Final amount, P = Principal, r = Annual interest rate
+        // n = Number of times interest is compounded per year, t = Time in years
+        let futureValue = initial * Math.pow(1 + (rate / compoundFrequency), compoundFrequency * totalTimeYears);
+
+        // Handle contributions
+        if (contributionType !== 'none') {
+            const totalContributions = totalTimeYears * contributionFrequency;
+            for (let i = 0; i < totalContributions; i++) {
+                const timeRemaining = totalTimeYears - (i / contributionFrequency);
+                const contributionFV = contributionAmount * Math.pow(1 + (rate / compoundFrequency), compoundFrequency * timeRemaining);
+                if (contributionType === 'deposit') {
+                    futureValue += contributionFV;
+                } else if (contributionType === 'withdrawal') {
+                    futureValue -= contributionFV;
+                }
+            }
+        }
+
+        const totalInterest = futureValue - initial - 
+            (contributionType === 'deposit' ? contributionAmount * totalTimeYears * contributionFrequency : 0) +
+            (contributionType === 'withdrawal' ? contributionAmount * totalTimeYears * contributionFrequency : 0);
+
+        // Update results
+        document.getElementById('future-value').textContent = 
+            this.formatCurrency(futureValue, currency);
+        document.getElementById('total-interest').textContent = 
+            this.formatCurrency(totalInterest, currency);
+        document.getElementById('initial-balance').textContent = 
+            this.formatCurrency(initial, currency);
+
+        this.updateTable(initial, rate, totalTimeYears, compoundFrequency, currency, contributionType, contributionAmount, contributionFrequency);
+        this.updateChart();
+    },
+
+    formatCurrency(value, currency) {
+        return `${currency}${value.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })}`;
+    },
+
+    updateTable(initial, rate, periods, frequency, currency, contributionType, contributionAmount, contributionFrequency) {
+        const tbody = document.getElementById('results-table');
+        tbody.innerHTML = '';
+        const isMonthly = document.querySelector('[data-view].active').dataset.view === 'monthly';
+        const intervalPeriods = isMonthly ? periods * 12 : periods;
+        
+        let balance = initial;
+        let previousBalance = initial;
+        
+        for (let i = 1; i <= intervalPeriods; i++) {
+            // Calculate compound interest for this period
+            const timeElapsed = isMonthly ? i/12 : i;
+            const newBalance = initial * Math.pow(1 + (rate / frequency), frequency * timeElapsed);
+            
+            // Calculate contributions if any
+            if (contributionType !== 'none') {
+                const contributionPeriods = Math.floor(timeElapsed * contributionFrequency);
+                for (let j = 0; j < contributionPeriods; j++) {
+                    const timeRemaining = timeElapsed - (j / contributionFrequency);
+                    const contributionFV = contributionAmount * Math.pow(1 + (rate / frequency), frequency * timeRemaining);
+                    if (contributionType === 'deposit') {
+                        newBalance += contributionFV;
+                    } else if (contributionType === 'withdrawal') {
+                        newBalance -= contributionFV;
+                    }
+                }
+            }
+            
+            const interest = newBalance - balance;
+            balance = newBalance;
+
+            const row = tbody.insertRow();
+            row.insertCell().textContent = isMonthly ? `Month ${i}` : `Year ${i}`;
+            row.insertCell().textContent = this.formatCurrency(interest, currency);
+            row.insertCell().textContent = this.formatCurrency(balance, currency);
+            
+            previousBalance = balance;
+        }
+    },
+
+    updateChart() {
+        const ctx = document.getElementById('results-chart');
+        if (this.chart) {
+            this.chart.destroy();
+        }
+
+        const isMonthly = document.querySelector('[data-view].active').dataset.view === 'monthly';
+        const periods = (parseInt(document.getElementById('years').value) * 12) + parseInt(document.getElementById('months').value);
+        const intervalPeriods = isMonthly ? periods : Math.ceil(periods / 12);
+
+        const labels = Array.from({length: intervalPeriods}, (_, i) => isMonthly ? `Month ${i + 1}` : `Year ${i + 1}`);
+        const data = this.calculateChartData(intervalPeriods, isMonthly);
+
+        this.chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Balance',
+                    data: data,
+                    borderColor: '#2196F3',
+                    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Investment Growth Over Time'
+                    }
+                }
+            }
+        });
+    },
+
+    calculateChartData(intervalPeriods, isMonthly) {
+        const initial = parseFloat(document.getElementById('initial').value);
+        const rate = parseFloat(document.getElementById('rate').value) / 100;
+        const frequency = parseInt(document.getElementById('compound-frequency').value);
+        const contributionType = document.querySelector('.contrib-btn.active').dataset.type;
+        const contributionAmount = parseFloat(document.getElementById('contribution-amount').value) || 0;
+        const contributionFrequency = parseInt(document.getElementById('contribution-frequency').value);
+
+        let balance = initial;
+        const data = [balance];
+
+        for (let i = 1; i <= intervalPeriods; i++) {
+            const timeElapsed = isMonthly ? i/12 : i;
+            balance = initial * Math.pow(1 + (rate / frequency), frequency * timeElapsed);
+            
+            if (contributionType !== 'none') {
+                const contributionPeriods = Math.floor(timeElapsed * contributionFrequency);
+                for (let j = 0; j < contributionPeriods; j++) {
+                    const timeRemaining = timeElapsed - (j / contributionFrequency);
+                    const contributionFV = contributionAmount * Math.pow(1 + (rate / frequency), frequency * timeRemaining);
+                    if (contributionType === 'deposit') {
+                        balance += contributionFV;
+                    } else if (contributionType === 'withdrawal') {
+                        balance -= contributionFV;
+                    }
+                }
+            }
+            
+            data.push(balance);
+        }
+
+        return data;
+    },
+
+    downloadResults(format) {
+        switch (format) {
+            case 'pdf':
+                this.downloadPDF();
+                break;
+            case 'csv':
+                this.downloadCSV();
+                break;
+            case 'png':
+            case 'jpg':
+            case 'svg':
+                this.downloadImage(format);
+                break;
+            case 'xls':
+                this.downloadExcel();
+                break;
+        }
+    },
+
+    downloadPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.text('Compound Interest Calculator Results', 10, 10);
+        doc.text(`Future Value: ${document.getElementById('future-value').textContent}`, 10, 20);
+        doc.text(`Total Interest Earned: ${document.getElementById('total-interest').textContent}`, 10, 30);
+        doc.text(`Initial Balance: ${document.getElementById('initial-balance').textContent}`, 10, 40);
+
+        doc.save('compound_interest_results.pdf');
+    },
+
+    downloadCSV() {
+        const rows = [
+            ['Period', 'Interest', 'Balance'],
+            ...Array.from(document.querySelectorAll('#results-table tr')).map(row => 
+                Array.from(row.cells).map(cell => cell.textContent)
+            )
+        ];
+
+        const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "compound_interest_results.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    },
+
+    downloadImage(format) {
+        const canvas = document.getElementById('results-chart');
+        const link = document.createElement('a');
+        link.download = `compound_interest_chart.${format}`;
+        link.href = canvas.toDataURL(`image/${format}`);
+        link.click();
+    },
+
+    downloadExcel() {
+        const rows = [
+            ['Period', 'Interest', 'Balance'],
+            ...Array.from(document.querySelectorAll('#results-table tr')).map(row => 
+                Array.from(row.cells).map(cell => cell.textContent)
+            )
+        ];
+
+        let csvContent = "data:text/csv;charset=utf-8,";
+        rows.forEach(function(rowArray) {
+            let row = rowArray.join(",");
+            csvContent += row + "\r\n";
+        });
+
+        var encodedUri = encodeURI(csvContent);
+        var link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "compound_interest_results.xls");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+};
+
+// Initialize calculator when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => calculator.initialize());
+    </script>
+</body>
+</html>
